@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useContext } from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
@@ -7,12 +7,70 @@ import AddAPhotoIcon from '@material-ui/icons/AddAPhotoTwoTone';
 import LandscapeIcon from '@material-ui/icons/LandscapeOutlined';
 import ClearIcon from '@material-ui/icons/Clear';
 import SaveIcon from '@material-ui/icons/SaveTwoTone';
+import Context from '../../context';
+import axios from 'axios';
+import { CREATE_PIN_MUTATION } from '../../graphql/mutations';
+import { useClient } from '../../client'
 
 const CreatePin = ({ classes }) => {
+  const client=useClient();
+  const { dispatch, state } = useContext(Context);
+  const [title, setTitle] = useState('');
+  const [image, setImage] = useState('');
+  const [content, setContent] = useState('');
+  const [submitig, setSubmiting] = useState(false);
+
+  const handleSubmit = async e => {
+    try {
+      e.preventDefault();
+      setSubmiting(true);
+    
+      const url = await handleImageUpload();
+      const { latitude, longitude } = state.draft;
+      const variables = {
+        title,
+        image: url,
+        content,
+        latitude,
+        longitude
+      };
+      const { createPin } = await client.request(
+        CREATE_PIN_MUTATION,
+        variables
+      );
+      console.log('Pin Created', { createPin });
+      dispatch({type:"CREATE_PIN",payload:createPin})
+      handleDeleteDraft()
+    } catch (err) {
+      setSubmiting(false);
+      console.error('Error creating pin', err);
+    }
+  };
+
+  const handleImageUpload = async () => {
+    const data = new FormData();
+    data.append('file', image);
+    data.append('upload_preset', 'geopins');
+    data.append('cloud_name', 'dme737cmn');
+
+    const res = await axios.post(
+      'https://api.cloudinary.com/v1_1/dme737cmn/upload',
+      data
+    );
+    return res.data.url;
+  };
+
+  const handleDeleteDraft = () => {
+    setTitle('');
+    setImage('');
+    setContent('');
+    dispatch({ type: 'DELETE_DRAFT' });
+  };
+
   return (
     <form className={classes.form}>
       <Typography
-        classNmae={classes.alignCenter}
+        className={classes.alignCenter}
         component='h2'
         variant='h4'
         color='secondary'
@@ -21,40 +79,62 @@ const CreatePin = ({ classes }) => {
         Pin Location
       </Typography>
       <div>
-        <TextField name='title' label='Title' placeholder='Insert pin title' />
-        <input accept='image/*' id='image' type='file' className={classes.input} />
-        <label htmlFor="image">
-          <Button component="span" size="small" className={classes.button}>
-          <AddAPhotoIcon/>
+        <TextField
+          name='title'
+          onChange={e => setTitle(e.target.value)}
+          label='Title'
+          placeholder='Insert pin title'
+        />
+        <input
+          accept='image/*'
+          id='image'
+          type='file'
+          className={classes.input}
+          onChange={e => setImage(e.target.files[0])}
+        />
+        <label htmlFor='image'>
+          <Button
+            component='span'
+            size='small'
+            className={classes.button}
+            style={{ color: image && 'green' }}
+          >
+            <AddAPhotoIcon />
           </Button>
         </label>
       </div>
       <div className={classes.contentField}>
-      <TextField
-      name="content"
-      label="Content"
-      multiline
-      rows="6"
-      margin="normal"
-      fullWidth
-      variant="outlined"
-      />
+        <TextField
+          name='content'
+          label='Content'
+          multiline
+          rows='6'
+          margin='normal'
+          fullWidth
+          variant='outlined'
+          onChange={e => setContent(e.target.value)}
+        />
       </div>
       <div>
-        <Button className={classes.button}
-        variant="contained"
-        color="primary"
+        <Button
+          onClick={handleDeleteDraft}
+          className={classes.button}
+          variant='contained'
+          color='primary'
         >
-        <ClearIcon className={classes.leftIcon}/>
-        Discard
+          <ClearIcon className={classes.leftIcon} />
+          Discard
         </Button>
-        <Button className={classes.button}
-        type="submit"
-        variant="contained"
-        color="secondary"
+        <Button
+          className={classes.button}
+          type='submit'
+          variant='contained'
+          color='secondary'
+          onClick={handleSubmit}
+          disabled={!title.trim() || !content.trim() || !image || submitig}
         >
-        Submit 
-        <SaveIcon className={classes.rightIcon}></SaveIcon>
+          Submit
+          <SaveIcon className={classes.rightIcon} />
         </Button>
       </div>
     </form>
@@ -68,8 +148,6 @@ const styles = theme => ({
     alignItems: 'center',
     flexDirection: 'column',
     paddingBottom: theme.spacing.unit
-    
-   
   },
   contentField: {
     marginLeft: theme.spacing.unit,
