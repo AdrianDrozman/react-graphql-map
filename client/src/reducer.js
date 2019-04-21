@@ -14,7 +14,8 @@ export default function reducer(state, { type, payload }) {
       return {
         ...state,
         currentUser: null,
-        isAuth: false
+        isAuth: false,
+        draft:null
       };
     case 'CREATE_DRAFT':
       return {
@@ -53,15 +54,26 @@ export default function reducer(state, { type, payload }) {
         currentPin: payload,
         draft: null
       };
-      case "DELETE_PIN":
-      const deletedPin=payload
-      const filteretedPins=state.pins.filter(pin=>pin._id !==deletedPin._id)
+    case 'DELETE_PIN':
+      const deletedPin = payload;
+      const filteretedPins = state.pins.filter(
+        pin => pin._id !== deletedPin._id
+      );
       return {
         ...state,
-        pins:filteretedPins,
-        currentPin:null
-      }
-
+        pins: filteretedPins,
+        currentPin: null
+      };
+    case 'CREATE_COMMENT':
+      const updatedCurrentPin = payload;
+      const updatedPins = state.pins.map(pin =>
+        pin._id === updatedCurrentPin._id ? updatedCurrentPin : pin
+      );
+      return {
+        ...state,
+        pins: updatedPins,
+        currentPin: updatedCurrentPin
+      };
     default:
       return state;
   }
