@@ -11,9 +11,11 @@ import Context from '../../context';
 import axios from 'axios';
 import { CREATE_PIN_MUTATION } from '../../graphql/mutations';
 import { useClient } from '../../client'
+import { unstable_useMediaQuery as useMediaQuery } from '@material-ui/core/useMediaQuery';
 
 const CreatePin = ({ classes }) => {
   const client=useClient();
+  const mobileSize=useMediaQuery('(min-width:650px')
   const { dispatch, state } = useContext(Context);
   const [title, setTitle] = useState('');
   const [image, setImage] = useState('');
@@ -34,12 +36,11 @@ const CreatePin = ({ classes }) => {
         latitude,
         longitude
       };
-      const { createPin } = await client.request(
+       await client.request(
         CREATE_PIN_MUTATION,
         variables
       );
-      console.log('Pin Created', { createPin });
-      dispatch({type:"CREATE_PIN",payload:createPin})
+      
       handleDeleteDraft()
     } catch (err) {
       setSubmiting(false);
@@ -108,7 +109,7 @@ const CreatePin = ({ classes }) => {
           name='content'
           label='Content'
           multiline
-          rows='6'
+          rows={mobileSize ? "3" : "6"}
           margin='normal'
           fullWidth
           variant='outlined'
