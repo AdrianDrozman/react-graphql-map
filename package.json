@@ -16,7 +16,7 @@
     "google-auth-library": "^3.0.1",
     "graphql": "^14.1.1",
     "mapbox-gl": "^0.53.1",
-    "mongoose": "^5.4.6",
+    "mongoose": "^5.7.5",
     "react": "^16.8.6",
     "react-dom": "^16.8.6"
   },
